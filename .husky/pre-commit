@@ -1,0 +1,26 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+
+echo 'Running dotnet-format  all file';
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+
+dotnet format;                       
+
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";
+echo ".";

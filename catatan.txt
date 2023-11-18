@@ -1,0 +1,4 @@
+1.  dotnet new gitignore --force
+2.  dotnet new tool-manifest
+3.  dotnet tool install Husky
+4.  dotnet husky install
