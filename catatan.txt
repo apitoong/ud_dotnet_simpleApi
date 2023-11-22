@@ -1,4 +1,39 @@
 1.  dotnet new gitignore --force
-2.  dotnet new tool-manifest
-3.  dotnet tool install Husky
-4.  dotnet husky install
+2.  Swashbuckle.AspNetCore
+    menambahkan paramater pada swagger
+3.  dotnet new tool-manifest
+4.  dotnet tool install Husky
+5.  dotnet husky install
+6.  edit .husky/pre-commit
+    see https://github.com/afitra/ud_dotnet_miniApi/blob/dev/.husky/pre-commit
+ 
+//  ORM   
+7.  Microsoft.EntityFrameworkCore
+
+//  driver sql-server
+8.  Microsoft.EntityFrameworkCore.SqlServer
+
+//  driver postgres
+8.  Npgsql
+
+
+
+//  buat migrasi
+9.  tambah migrasi
+    dotnet ef migrations add initDB
+10. jalankan migrasi
+    dotnet ef database update
+
+11. AutoMapper.Extensions.Microsoft.DependencyInjection
+    untuk automapper
+12. AutoMapper
+    untuk automapper
+    
+13. Newtonsoft.Json
+    untuk mapping json
+    
+14. serilog
+    serilog.AspNetCore
+    serilog.Sinks.Console
+    serilog.Sinks.File
+    package satu paket untuk implement logger
