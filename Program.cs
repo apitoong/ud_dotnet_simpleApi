@@ -1,7 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using simpleApi.Connection;
@@ -43,7 +42,7 @@ builder.Services.AddHttpLogging(logging =>
 var logger = new LoggerConfiguration()
     .WriteTo.Console()
     .MinimumLevel.Information()
-    .WriteTo.File("Logs/miniApiLog.txt", rollingInterval: RollingInterval.Day, encoding: Encoding.UTF8)
+    .WriteTo.File("Logs/miniApiLog.log", rollingInterval: RollingInterval.Day, encoding: Encoding.UTF8)
     .CreateLogger();
 
 builder.Logging.ClearProviders();

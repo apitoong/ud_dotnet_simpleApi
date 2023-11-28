@@ -32,7 +32,6 @@ public class ExternalDataService : IExternalDataService
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
-            Console.WriteLine("pppppppp " + response);
             var jsonString = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<T>(jsonString);
         }
