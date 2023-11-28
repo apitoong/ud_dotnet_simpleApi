@@ -56,7 +56,7 @@ public class AlbumController : Controller
         try
         {
             var resp = await externalDataService.GetDataPlaceholder();
-
+            Console.WriteLine(">>>>>>>>> 1111 " + resp);
             var result = new
             {
                 code = "00",
@@ -65,6 +65,7 @@ public class AlbumController : Controller
                 data = resp
             };
             var json = JsonConvert.SerializeObject(result);
+            Console.WriteLine(">>>>>>>>> " + json);
             return StatusCode(StatusCodes.Status200OK, json);
         }
         catch (Exception e)

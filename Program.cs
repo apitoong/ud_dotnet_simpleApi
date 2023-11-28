@@ -1,3 +1,5 @@
+using System.Text;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -26,6 +28,28 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "SimpleApi Dong", Version = "v1" });
 });
 
+// start add costom logging    
+builder.Services.AddHttpLogging(logging =>
+{
+    // Customize HTTP logging here.
+    logging.LoggingFields = HttpLoggingFields.All;
+    logging.RequestHeaders.Add("sec-ch-ua");
+    logging.ResponseHeaders.Add("my-response-header");
+    logging.MediaTypeOptions.AddText("application/json");
+    logging.RequestBodyLogLimit = 4096;
+    logging.ResponseBodyLogLimit = 4096;
+});
+
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .MinimumLevel.Information()
+    .WriteTo.File("Logs/miniApiLog.txt", rollingInterval: RollingInterval.Day, encoding: Encoding.UTF8)
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
+// end add costom logging    
 
 // start  add config db nya
 builder
@@ -39,17 +63,7 @@ builder
     );
 // end  add config db nya
 
-// start add costom logging    
-var logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.Console() // log terminal
-    .WriteTo.File("Logs/miniApiLog.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
 
-// end add costom logging    
-
-builder.Logging.ClearProviders();
-builder.Logging.AddSerilog(logger);
 // end add costom logging    
 var apiKey = Environment.GetEnvironmentVariable("TES");
 var dbLog = Convert.ToBoolean(Environment.GetEnvironmentVariable("DB_LOG"));
