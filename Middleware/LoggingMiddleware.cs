@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using System.IO;
+using System.Dynamic;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 public class LoggingMiddleware
 {
@@ -32,45 +30,73 @@ public class LoggingMiddleware
         }
     }
 
-    private async Task LogResponse(HttpContext context, MemoryStream responseBody, Stream originalResponseBody)
-    {
-        var responseContent = new StringBuilder();
-        responseContent.AppendLine("=== Response Info ===");
-
-        responseContent.AppendLine("-- headers");
-        foreach (var (headerKey, headerValue) in context.Response.Headers)
-            responseContent.AppendLine($"header = {headerKey}    value = {headerValue}");
-
-        responseContent.AppendLine("-- body");
-        responseBody.Position = 0;
-        var content = await new StreamReader(responseBody).ReadToEndAsync();
-        responseContent.AppendLine($"body = {content}");
-        responseBody.Position = 0;
-        await responseBody.CopyToAsync(originalResponseBody);
-        context.Response.Body = originalResponseBody;
-
-        _logger.LogInformation(responseContent.ToString());
-    }
-
     private async Task LogRequest(HttpContext context)
     {
         var requestContent = new StringBuilder();
 
-        requestContent.AppendLine("=== Request Info ===");
-        requestContent.AppendLine($"method = {context.Request.Method.ToUpper()}");
-        requestContent.AppendLine($"path = {context.Request.Path}");
-
-        requestContent.AppendLine("-- headers");
+        requestContent.AppendLine("\n=== Request Information Start ===");
+        IDictionary<string, object> headerData = new Dictionary<string, object> { };
         foreach (var (headerKey, headerValue) in context.Request.Headers)
-            requestContent.AppendLine($"header = {headerKey}    value = {headerValue}");
+            headerData.Add(headerKey, headerValue[0]);
 
-        requestContent.AppendLine("-- body");
         context.Request.EnableBuffering();
         var requestReader = new StreamReader(context.Request.Body, Encoding.UTF8);
         var content = await requestReader.ReadToEndAsync();
-        requestContent.AppendLine($"body = {content}");
 
+        var requestId = Guid.NewGuid().ToString();
+        context.Items["request_id"] = requestId;
+        dynamic requestData = new ExpandoObject();
+        requestData.request_id = requestId;
+        requestData.method = context.Request.Method.ToUpper();
+        requestData.url = context.Request.Path;
+        requestData.ip = context.Connection.RemoteIpAddress?.ToString();
+        requestData.message = "Request Payload";
+        requestData.level_name = "DEBUG";
+        requestData.channel = "development";
+        requestData.date = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        requestData.timezone = TimeZoneInfo.Local.Id;
+        requestData.headers = headerData;
+        requestData.context = JsonConvert.DeserializeObject(content);
+
+        string jsonRequestData = JsonConvert.SerializeObject(requestData);
+        requestContent.AppendLine($"{jsonRequestData}");
+        requestContent.AppendLine("=== Request Information End ===");
         _logger.LogInformation(requestContent.ToString());
         context.Request.Body.Position = 0;
+    }
+
+    private async Task LogResponse(HttpContext context, MemoryStream responseBody, Stream originalResponseBody)
+    {
+        var responseContent = new StringBuilder();
+        responseContent.AppendLine("\n=== Response Information Start ===");
+
+        IDictionary<string, object> headerData = new Dictionary<string, object> { };
+        foreach (var (headerKey, headerValue) in context.Request.Headers)
+            headerData.Add(headerKey, headerValue[0]);
+
+        responseBody.Position = 0;
+        var content = await new StreamReader(responseBody).ReadToEndAsync();
+        responseBody.Position = 0;
+        await responseBody.CopyToAsync(originalResponseBody);
+        context.Response.Body = originalResponseBody;
+
+        dynamic responseData = new ExpandoObject();
+        responseData.request_id = context.Items["request_id"]?.ToString();
+        responseData.method = context.Request.Method.ToUpper();
+        responseData.url = context.Request.Path;
+        responseData.ip = context.Connection.RemoteIpAddress?.ToString();
+        responseData.message = "Response Payload";
+        responseData.level_name = "DEBUG";
+        responseData.channel = "development";
+        responseData.date = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        responseData.timezone = TimeZoneInfo.Local.Id;
+        responseData.headers = headerData;
+        responseData.context = JsonConvert.DeserializeObject(content);
+
+        string jsonResponseData = JsonConvert.SerializeObject(responseData);
+        responseContent.AppendLine($"{jsonResponseData}");
+
+        responseContent.AppendLine("=== Response Information End ===");
+        _logger.LogInformation(responseContent.ToString());
     }
 }
