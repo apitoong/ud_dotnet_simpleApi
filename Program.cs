@@ -57,8 +57,8 @@ builder
         options =>
             options
                 .UseNpgsql(builder.Configuration.GetConnectionString("LocalConnectionString"))
-        // untuk menampilkan log query ke db optional
         // .LogTo(Console.WriteLine, LogLevel.Information)
+        // untuk menampilkan log query ke db optional
     );
 // end  add config db nya
 
@@ -88,7 +88,6 @@ if (app.Environment.IsDevelopment())
     // app.UseSwaggerUI();
     app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "SimpleApi lah v1"); });
 }
-
 
 app.UseHttpsRedirection();
 
