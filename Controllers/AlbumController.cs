@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using simpleApi.Basic;
 using simpleApi.Connection;
 using simpleApi.Dto;
 using simpleApi.Interface;
@@ -11,22 +12,21 @@ namespace simpleApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AlbumController : Controller
+public class AlbumController : BasicController
 {
     private readonly IAlbumService albumService;
     private readonly IExternalDataService externalDataService;
     private readonly DatabaseUtama dbContext;
-    private readonly IMapper mapper;
-    private readonly ILogger<AlbumController> logger;
+
 
     public AlbumController(IAlbumService albumService, DatabaseUtama dbContext, IMapper mapper,
         IExternalDataService externalDataService, ILogger<AlbumController> logger)
+        : base(logger, mapper)
     {
+        source = "AlbumController";
         this.albumService = albumService;
         this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        this.mapper = mapper;
         this.externalDataService = externalDataService;
-        this.logger = logger;
     }
 
 
@@ -105,12 +105,13 @@ public class AlbumController : Controller
                 name = "okelah",
                 tujuan = "ini hanya tes object logger"
             };
-            logger.LogInformation($"get all walk request : {resp}");
-            logger.LogDebug($"sample logger ->  debug : {resp}");
-            logger.LogTrace($"sample logger  -> trace  : {resp}");
-            logger.LogWarning($"sample logger  -> warning  : {resp}");
-            logger.LogError($"sample logger  -> error  : {resp}");
-            logger.LogCritical($"sample logger  -> critical  : {resp}");
+
+            CostomLogger("Information", "Response", source, "tes message", resp);
+            CostomLogger("Information", "Debug", source, "tes message", resp);
+            CostomLogger("Information", "Trace", source, "tes message", resp);
+            CostomLogger("Information", "Warning", source, "tes message", resp);
+            CostomLogger("Information", "Error", source, "tes message", resp);
+            CostomLogger("Information", "Critical", source, "tes message", resp);
             return StatusCode(StatusCodes.Status201Created, resp);
         }
         catch (Exception e)
