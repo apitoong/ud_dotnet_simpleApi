@@ -32,8 +32,4 @@
     <_ContentIncludedByDefault Remove="YourProject.Application\obj\YourProject.Application.csproj.nuget.dgspec.json" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Logs\" />
-  </ItemGroup>
-
 </Project>

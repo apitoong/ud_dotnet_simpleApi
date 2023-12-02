@@ -87,7 +87,7 @@ public class AlbumController : Controller
                 data = resp
             };
             var json = JsonConvert.SerializeObject(result);
-            return StatusCode(StatusCodes.Status201Created, json);
+            return StatusCode(StatusCodes.Status201Created, result);
         }
         catch (Exception e)
         {
