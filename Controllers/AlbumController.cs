@@ -46,7 +46,8 @@ public class AlbumController : BasicController
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
+                BasicMessage.GeneralErrorMessage);
         }
     }
 
@@ -56,19 +57,12 @@ public class AlbumController : BasicController
         try
         {
             var resp = await externalDataService.GetDataPlaceholder();
-            var result = new
-            {
-                code = "00",
-                status = true,
-                message = "success",
-                data = resp
-            };
-            var json = JsonConvert.SerializeObject(result);
-            return StatusCode(StatusCodes.Status200OK, json);
+            return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage, resp);
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
+                BasicMessage.GeneralErrorMessage);
         }
     }
 
@@ -78,20 +72,12 @@ public class AlbumController : BasicController
         try
         {
             var resp = await externalDataService.PostDataPlaceholder(request);
-
-            var result = new
-            {
-                code = "00",
-                status = true,
-                message = "success",
-                data = resp
-            };
-            var json = JsonConvert.SerializeObject(result);
-            return StatusCode(StatusCodes.Status201Created, result);
+            return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage, resp);
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
+                BasicMessage.GeneralErrorMessage);
         }
     }
 
@@ -112,11 +98,12 @@ public class AlbumController : BasicController
             CostomLogger("Information", "Warning", source, "tes message", resp);
             CostomLogger("Information", "Error", source, "tes message", resp);
             CostomLogger("Information", "Critical", source, "tes message", resp);
-            return StatusCode(StatusCodes.Status201Created, resp);
+            return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage);
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
+                BasicMessage.GeneralErrorMessage);
         }
     }
 }
