@@ -22,10 +22,10 @@ public class AlbumController : BasicController
     private readonly DatabaseUtama dbContext;
     private readonly KafkaProducerService _kafkaProducerService;
 
-    public AlbumController(BasicLogger customLogger, BasicConfiguration basicConfiguration, IMapper mapper,
+    public AlbumController(BasicLogger basicLogger, BasicConfiguration basicConfiguration, IMapper mapper,
         IAlbumService albumService, DatabaseUtama dbContext, KafkaProducerService kafkaProducerService,
         IExternalDataService externalDataService)
-        : base(customLogger, basicConfiguration, mapper)
+        : base(basicLogger, basicConfiguration, mapper)
     {
         _source = GetType().Name;
         this.albumService = albumService;
@@ -60,7 +60,6 @@ public class AlbumController : BasicController
     {
         try
         {
-            // var resp = await externalDataService.GetDataPlaceholder();
             var resp = await externalDataService.GetDataPlaceholder();
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage, resp);
         }
@@ -95,12 +94,12 @@ public class AlbumController : BasicController
                 tujuan = "ini hanya tes object logger"
             };
 
-            _customLogger.Log("Information", "Information", _source, "tes message", resp);
-            _customLogger.Log("Debug", "Debug", _source, "tes message", resp);
-            _customLogger.Log("Trace", "Trace", _source, "tes message", resp);
-            _customLogger.Log("Warning", "Warning", _source, "tes message", resp);
-            _customLogger.Log("Error", "Error", _source, "tes message", resp);
-            _customLogger.Log("Critical", "Critical", _source, "tes message", resp);
+            _basicLogger.Log("Information", "Information", _source, "tes message", resp);
+            _basicLogger.Log("Debug", "Debug", _source, "tes message", resp);
+            _basicLogger.Log("Trace", "Trace", _source, "tes message", resp);
+            _basicLogger.Log("Warning", "Warning", _source, "tes message", resp);
+            _basicLogger.Log("Error", "Error", _source, "tes message", resp);
+            _basicLogger.Log("Critical", "Critical", _source, "tes message", resp);
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage);
         }
         catch (Exception e)
@@ -120,7 +119,11 @@ public class AlbumController : BasicController
             kafkaMessage.EventTask = "AlbumMessage";
             kafkaMessage.EventData = messageByte;
 
-            await _kafkaProducerService.ProduceMessageAsync(kafkaMessage);
+            await _kafkaProducerService.ProduceMessageAsync(
+                _basicConfiguration.GetVariable("KAFKA_TOPIC"),
+                kafkaMessage);
+
+
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage,
                 kafkaMessage);
         }

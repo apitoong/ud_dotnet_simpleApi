@@ -9,15 +9,15 @@ namespace simpleApi.Service;
 
 public class ExternalDataService : IExternalDataService
 {
-    protected readonly BasicLogger _customLogger;
+    protected readonly BasicLogger _basicLogger;
     private readonly BasicConfiguration _basicConfiguration;
     private readonly IHttpClientFactory _httpClientFactory;
     protected string _source;
 
-    public ExternalDataService(BasicLogger customLogger, BasicConfiguration basicConfiguration,
+    public ExternalDataService(BasicLogger basicLogger, BasicConfiguration basicConfiguration,
         IHttpClientFactory httpClientFactory)
     {
-        _customLogger = customLogger;
+        _basicLogger = basicLogger;
         _basicConfiguration = basicConfiguration;
         _httpClientFactory = httpClientFactory;
         _source = GetType().Name;
@@ -28,7 +28,7 @@ public class ExternalDataService : IExternalDataService
         try
         {
             var url = _basicConfiguration.GetVariable("JSON_PLACE_HOLDER_URL") + path;
-            _customLogger.Log("Information", "Request", _source, url);
+            _basicLogger.Log("Information", "Request", _source, url);
             var client = _httpClientFactory.CreateClient();
             var request = new HttpRequestMessage(method, url);
 
@@ -42,22 +42,22 @@ public class ExternalDataService : IExternalDataService
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
             var jsonString = await response.Content.ReadAsStringAsync();
-            _customLogger.Log("Information", "Response Status", _source, url,
+            _basicLogger.Log("Information", "Response Status", _source, url,
                 response.StatusCode.GetHashCode());
-            _customLogger.Log("Information", "Response Service", _source, url, jsonString);
+            _basicLogger.Log("Information", "Response Service", _source, url, jsonString);
             return JsonConvert.DeserializeObject<T>(jsonString);
         }
         catch (HttpRequestException ex)
         {
             // Error HTTP dong
-            _customLogger.Log("Error", "Http Error", _source,
+            _basicLogger.Log("Error", "Http Error", _source,
                 _basicConfiguration.GetVariable("JSON_PLACE_HOLDER_URL") + path, ex.Message);
             throw new HttpRequestException($"Terjadi kesalahan saat akses API eksternal: {ex.Message}");
         }
         catch (Exception ex)
         {
             // global error nih
-            _customLogger.Log("Error", "Global Error", _source,
+            _basicLogger.Log("Error", "Global Error", _source,
                 _basicConfiguration.GetVariable("JSON_PLACE_HOLDER_URL") + path, ex.Message);
             throw new Exception($"Terjadi kesalahan global: {ex.Message}");
         }

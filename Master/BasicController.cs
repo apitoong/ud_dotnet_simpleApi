@@ -7,16 +7,16 @@ namespace simpleApi.Basic;
 
 public class BasicController : Controller
 {
-    protected readonly BasicLogger _customLogger;
+    protected readonly BasicLogger _basicLogger;
     protected readonly BasicConfiguration _basicConfiguration;
     protected readonly IMapper _mapper;
     protected string _source;
     private GlobalResponse _response;
 
 
-    public BasicController(BasicLogger customLogger, BasicConfiguration basicConfiguration, IMapper mapper)
+    public BasicController(BasicLogger basicLogger, BasicConfiguration basicConfiguration, IMapper mapper)
     {
-        _customLogger = customLogger;
+        _basicLogger = basicLogger;
         _basicConfiguration = basicConfiguration;
         _mapper = mapper;
         _source = GetType().Name;
