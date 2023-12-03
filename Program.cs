@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.VisualBasic;
 using Serilog;
+using simpleApi.Basic;
 using simpleApi.Connection;
+using simpleApi.Helpers;
 using simpleApi.Interface;
 using simpleApi.Mapping;
 using simpleApi.Models;
@@ -50,13 +52,19 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
+builder.Services.AddSingleton<BasicLogger>();
 // end add costom logging    
+
+// start add global variable 
+builder.Services.AddSingleton<BasicConfiguration>();
+// end  add global variable 
 
 // start add Kafka configuration
 builder.Services.AddSingleton<KafkaProducerService>();
 builder.Services.AddSingleton<KafkaConsumerService>();
 builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection("KafkaConfig"));
 // end add Kafka configuration
+
 
 // start  add config db nya
 builder
@@ -69,14 +77,6 @@ builder
         // untuk menampilkan log query ke db optional
     );
 // end  add config db nya
-
-
-// end add costom logging    
-var apiKey = Environment.GetEnvironmentVariable("TES");
-var dbLog = Convert.ToBoolean(Environment.GetEnvironmentVariable("DB_LOG"));
-Console.WriteLine("PPPPPPP  " + apiKey);
-Console.WriteLine(dbLog.GetType());
-Console.WriteLine(dbLog);
 
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<IExternalDataService, ExternalDataService>();
@@ -98,34 +98,27 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-// start add config auto logger
+
+// start add config auto logger request - response
 app.UseMiddleware<LoggingMiddleware>();
-// end add config auto logger
+// end add config auto logger request - response
+
 app.UseCors();
 app.MapControllers();
 
-// Consuming Kafka messages in a background thread
-
-var isKafkaConsumerEnabled = builder.Configuration.GetValue<bool>("ENABLE_KAFKA_CONSUMER");
-// var isKafkaConsumerEnabled = Convert.ToBoolean(Environment.GetEnvironmentVariable("ENABLE_KAFKA_CONSUMER"));
+//  start add config  Consuming Kafka messages in a background thread
+var isKafkaConsumerEnabled = Helper.StringToBoolean(BasicConfiguration.GetVariableGlobal("ENABLE_KAFKA_CONSUMER"));
+logger.Information(
+    $"\nInformation -=> Program.cs \n  Kafka Consumer is Enable based on the environment variable:\n  ENABLE_KAFKA_CONSUMER : {isKafkaConsumerEnabled}\n");
 if (isKafkaConsumerEnabled)
 {
-    logger.Information(
-        $"\nInformation -> Program.cs \n  Kafka Consumer is Enable based on the environment variable. : {isKafkaConsumerEnabled}\n");
     var serviceProvider = app.Services;
     var kafkaConsumerService = serviceProvider.GetRequiredService<KafkaConsumerService>();
     var cancellationTokenSource = new CancellationTokenSource();
     var cancellationToken = cancellationTokenSource.Token;
-
     Task.Run(() => kafkaConsumerService.ConsumeMessages(cancellationToken), cancellationToken);
 }
-else
-{
-    logger.Information(
-        $"\nInformation -> Program.cs \n  Kafka Consumer is disabled based on the environment variable. : {isKafkaConsumerEnabled}\n");
-}
-
+//  end add config  Consuming Kafka messages in a background thread
 
 app.Run();

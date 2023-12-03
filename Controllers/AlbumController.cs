@@ -5,7 +5,9 @@ using Newtonsoft.Json;
 using simpleApi.Basic;
 using simpleApi.Connection;
 using simpleApi.Dto;
+using simpleApi.Helpers;
 using simpleApi.Interface;
+using simpleApi.Models;
 using simpleApi.Request;
 using simpleApi.Service;
 
@@ -18,18 +20,18 @@ public class AlbumController : BasicController
     private readonly IAlbumService albumService;
     private readonly IExternalDataService externalDataService;
     private readonly DatabaseUtama dbContext;
-    private readonly KafkaProducerService _producerService;
+    private readonly KafkaProducerService _kafkaProducerService;
 
-
-    public AlbumController(IAlbumService albumService, DatabaseUtama dbContext, IMapper mapper,
-        IExternalDataService externalDataService, ILogger<AlbumController> logger, KafkaProducerService producerService)
-        : base(logger, mapper)
+    public AlbumController(BasicLogger customLogger, BasicConfiguration basicConfiguration, IMapper mapper,
+        IAlbumService albumService, DatabaseUtama dbContext, KafkaProducerService kafkaProducerService,
+        IExternalDataService externalDataService)
+        : base(customLogger, basicConfiguration, mapper)
     {
-        source = "AlbumController";
+        _source = GetType().Name;
         this.albumService = albumService;
         this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         this.externalDataService = externalDataService;
-        _producerService = producerService;
+        _kafkaProducerService = kafkaProducerService;
     }
 
 
@@ -44,28 +46,27 @@ public class AlbumController : BasicController
                 .ThenInclude(asong => asong.Song)
                 .ToList();
 
-            var albumDTOs = mapper.Map<List<AlbumDTO>>(albums);
+            var albumDTOs = _mapper.Map<List<AlbumDTO>>(albums);
             return StatusCode(StatusCodes.Status202Accepted, albumDTOs);
         }
         catch (Exception e)
         {
-            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
-                BasicMessage.GeneralErrorMessage);
+            return SetErrorResponse(e);
         }
     }
 
-    [HttpGet("api/")]
+    [HttpGet("api/json")]
     public async Task<IActionResult> GetDummy()
     {
         try
         {
+            // var resp = await externalDataService.GetDataPlaceholder();
             var resp = await externalDataService.GetDataPlaceholder();
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage, resp);
         }
         catch (Exception e)
         {
-            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
-                BasicMessage.GeneralErrorMessage);
+            return SetErrorResponse(e);
         }
     }
 
@@ -79,8 +80,7 @@ public class AlbumController : BasicController
         }
         catch (Exception e)
         {
-            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
-                BasicMessage.GeneralErrorMessage);
+            return SetErrorResponse(e);
         }
     }
 
@@ -95,37 +95,58 @@ public class AlbumController : BasicController
                 tujuan = "ini hanya tes object logger"
             };
 
-            CostomLogger("Information", "Response", source, "tes message", resp);
-            CostomLogger("Information", "Debug", source, "tes message", resp);
-            CostomLogger("Information", "Trace", source, "tes message", resp);
-            CostomLogger("Information", "Warning", source, "tes message", resp);
-            CostomLogger("Information", "Error", source, "tes message", resp);
-            CostomLogger("Information", "Critical", source, "tes message", resp);
+            _customLogger.Log("Information", "Information", _source, "tes message", resp);
+            _customLogger.Log("Debug", "Debug", _source, "tes message", resp);
+            _customLogger.Log("Trace", "Trace", _source, "tes message", resp);
+            _customLogger.Log("Warning", "Warning", _source, "tes message", resp);
+            _customLogger.Log("Error", "Error", _source, "tes message", resp);
+            _customLogger.Log("Critical", "Critical", _source, "tes message", resp);
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage);
         }
         catch (Exception e)
         {
-            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
-                BasicMessage.GeneralErrorMessage);
+            return SetErrorResponse(e);
         }
     }
 
-    [HttpPost("kafka")]
+    [HttpPost("kafka/message")]
     public async Task<IActionResult> KafkaMessage([FromBody] SimplePostRequest request)
     {
         try
         {
             var jsonMessage = JsonConvert.SerializeObject(request);
+            var messageByte = Helper.StringToByte(jsonMessage);
+            var kafkaMessage = new KafkaMessage();
+            kafkaMessage.EventTask = "AlbumMessage";
+            kafkaMessage.EventData = messageByte;
 
-
-            await _producerService.ProduceMessageAsync(jsonMessage);
+            await _kafkaProducerService.ProduceMessageAsync(kafkaMessage);
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage,
-                request);
+                kafkaMessage);
         }
         catch (Exception e)
         {
-            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
-                BasicMessage.GeneralErrorMessage);
+            return SetErrorResponse(e);
+        }
+    }
+
+    [HttpGet("variable")]
+    public IActionResult GetVariable([FromQuery] string variableName)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(variableName)) return BadRequest("Variable name is required.");
+
+            // Ganti dengan logika untuk mendapatkan nilai variabel berdasarkan nama
+            var variableValue = _basicConfiguration.GetVariable(variableName);
+
+            if (variableValue == null) return NotFound($"Variable with name '{variableName}' not found.");
+            return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage,
+                variableValue);
+        }
+        catch (Exception e)
+        {
+            return SetErrorResponse(e);
         }
     }
 }

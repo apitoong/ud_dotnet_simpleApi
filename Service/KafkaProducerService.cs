@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using simpleApi.Models;
 
 namespace simpleApi.Service;
@@ -27,10 +28,11 @@ public class KafkaProducerService
         };
     }
 
-    public async Task ProduceMessageAsync(string message)
+    public async Task ProduceMessageAsync(KafkaMessage message)
     {
         try
         {
+            var jsonkafkaMessage = JsonConvert.SerializeObject(message);
             using var producer = new ProducerBuilder<Null, string>(_producerConfig)
                 .SetErrorHandler((_, e) =>
                 {
@@ -40,7 +42,7 @@ public class KafkaProducerService
                 .Build();
 
             var deliveryResult = await producer.ProduceAsync(_kafkaConfig.Value.Topic,
-                new Message<Null, string> { Value = message });
+                new Message<Null, string> { Value = jsonkafkaMessage });
 
             if (deliveryResult.Status != PersistenceStatus.Persisted)
             {

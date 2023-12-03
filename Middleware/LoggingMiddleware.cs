@@ -83,10 +83,10 @@ public class LoggingMiddleware
 
         var loggerContent = new StringBuilder();
         loggerContent.AppendLine($"\n=== {message} Information Start ===");
-        loggerContent.AppendLine($"\n{message} Detail -> {JsonConvert.SerializeObject(contentDetail)}");
-        loggerContent.AppendLine($"\n{message} Header -> {JsonConvert.SerializeObject(headerContent)}");
+        loggerContent.AppendLine($"\n{message} Detail -=> {JsonConvert.SerializeObject(contentDetail)}");
+        loggerContent.AppendLine($"\n{message} Header -=> {JsonConvert.SerializeObject(headerContent)}");
         loggerContent.AppendLine(
-            $"\n{message} Body -> {JsonConvert.SerializeObject(JsonConvert.DeserializeObject(contentBody))}");
+            $"\n{message} Body -=> {JsonConvert.SerializeObject(JsonConvert.DeserializeObject(contentBody))}");
         loggerContent.AppendLine($"\n=== {message} Information End ===");
 
         _logger.LogInformation(loggerContent.ToString());

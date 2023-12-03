@@ -7,31 +7,54 @@ public class Helper
 {
     private static readonly string EncryptionKey = "YourSecretEncryptionKey";
 
-    public static string EncryptData(string plainText)
+    public static string StringToByte(string data)
     {
-        using (Aes aesAlg = Aes.Create())
+        if (string.IsNullOrEmpty(data) || string.IsNullOrEmpty(EncryptionKey))
+            throw new ArgumentException("Data dan kunci tidak boleh kosong.");
+
+        try
         {
-            aesAlg.Key = Encoding.UTF8.GetBytes(EncryptionKey);
-            aesAlg.IV = new byte[16];
+            // Menggunakan SHA-256 untuk menghasilkan kunci yang sesuai dengan panjang yang dibutuhkan oleh AES-256.
+            using var sha256 = new SHA256CryptoServiceProvider();
+            var keyBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(EncryptionKey));
 
-            ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+            using var aesAlg = Aes.Create();
+            aesAlg.Key = keyBytes;
 
-            byte[] encryptedBytes;
+            // IV (Initialization Vector) digunakan untuk meningkatkan keamanan enkripsi.
+            // IV harus unik dan tidak dirahasiakan.
+            aesAlg.IV = new byte[aesAlg.BlockSize / 8];
 
-            using (var msEncrypt = new MemoryStream())
+            using var encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+            using var msEncrypt = new MemoryStream();
+            using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+            using (var swEncrypt = new StreamWriter(csEncrypt))
             {
-                using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                {
-                    using (var swEncrypt = new StreamWriter(csEncrypt))
-                    {
-                        swEncrypt.Write(plainText);
-                    }
-                }
-
-                encryptedBytes = msEncrypt.ToArray();
+                swEncrypt.Write(data);
             }
 
-            return Convert.ToBase64String(encryptedBytes);
+            return Convert.ToBase64String(aesAlg.IV.Concat(msEncrypt.ToArray()).ToArray());
         }
+        catch (Exception ex)
+        {
+            throw new Exception($"Gagal mengenkripsi data. Error: {ex.Message}");
+        }
+    }
+
+
+    public static bool StringToBoolean(string value)
+    {
+        if (bool.TryParse(value, out var result))
+            return result;
+
+        return false;
+    }
+
+    public static int StringToInteger(string value)
+    {
+        if (int.TryParse(value, out var result))
+            return result;
+
+        return 0;
     }
 }
