@@ -7,6 +7,7 @@ using simpleApi.Connection;
 using simpleApi.Dto;
 using simpleApi.Interface;
 using simpleApi.Request;
+using simpleApi.Service;
 
 namespace simpleApi.Controllers;
 
@@ -17,16 +18,18 @@ public class AlbumController : BasicController
     private readonly IAlbumService albumService;
     private readonly IExternalDataService externalDataService;
     private readonly DatabaseUtama dbContext;
+    private readonly KafkaProducerService _producerService;
 
 
     public AlbumController(IAlbumService albumService, DatabaseUtama dbContext, IMapper mapper,
-        IExternalDataService externalDataService, ILogger<AlbumController> logger)
+        IExternalDataService externalDataService, ILogger<AlbumController> logger, KafkaProducerService producerService)
         : base(logger, mapper)
     {
         source = "AlbumController";
         this.albumService = albumService;
         this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         this.externalDataService = externalDataService;
+        _producerService = producerService;
     }
 
 
@@ -99,6 +102,25 @@ public class AlbumController : BasicController
             CostomLogger("Information", "Error", source, "tes message", resp);
             CostomLogger("Information", "Critical", source, "tes message", resp);
             return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage);
+        }
+        catch (Exception e)
+        {
+            return SetResponse(StatusCodes.Status500InternalServerError, BasicCode.GeneralCode, false,
+                BasicMessage.GeneralErrorMessage);
+        }
+    }
+
+    [HttpPost("kafka")]
+    public async Task<IActionResult> KafkaMessage([FromBody] SimplePostRequest request)
+    {
+        try
+        {
+            var jsonMessage = JsonConvert.SerializeObject(request);
+
+
+            await _producerService.ProduceMessageAsync(jsonMessage);
+            return SetResponse(StatusCodes.Status200OK, BasicCode.GeneralCode, true, BasicMessage.GeneralMessage,
+                request);
         }
         catch (Exception e)
         {
