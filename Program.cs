@@ -1,4 +1,5 @@
 using System.Text;
+using Confluent.Kafka;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -53,6 +54,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
 builder.Services.AddSingleton<BasicLogger>();
+// builder.Services.AddHostedService<BackgroundProcessService>();
 // end add costom logging    
 
 // start add global variable 
@@ -61,7 +63,8 @@ builder.Services.AddSingleton<BasicConfiguration>();
 
 // start add Kafka configuration
 builder.Services.AddSingleton<KafkaProducerService>();
-builder.Services.AddSingleton<KafkaConsumerService>();
+// builder.Services.AddSingleton<KafkaConsumerService>();
+
 builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection("KafkaConfig"));
 // end add Kafka configuration
 
@@ -87,6 +90,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddHttpClient();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -106,19 +110,4 @@ app.UseMiddleware<LoggingMiddleware>();
 
 app.UseCors();
 app.MapControllers();
-
-//  start add config  Consuming Kafka messages in a background thread
-var isKafkaConsumerEnabled = Helper.StringToBoolean(BasicConfiguration.GetVariableGlobal("ENABLE_KAFKA_CONSUMER"));
-logger.Information(
-    $"\nInformation -=> Program.cs \n  Kafka Consumer is Enable based on the environment variable:\n  ENABLE_KAFKA_CONSUMER : {isKafkaConsumerEnabled}\n");
-if (isKafkaConsumerEnabled)
-{
-    var serviceProvider = app.Services;
-    var kafkaConsumerService = serviceProvider.GetRequiredService<KafkaConsumerService>();
-    var cancellationTokenSource = new CancellationTokenSource();
-    var cancellationToken = cancellationTokenSource.Token;
-    Task.Run(() => kafkaConsumerService.ConsumeMessages(cancellationToken), cancellationToken);
-}
-//  end add config  Consuming Kafka messages in a background thread
-
 app.Run();

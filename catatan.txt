@@ -1,5 +1,5 @@
 1.  dotnet new gitignore --force
-2.  Swashbuckle.AspNetCore
+2.  dotnet add package Swashbuckle.AspNetCore
     menambahkan paramater pada swagger
 3.  dotnet new tool-manifest
 4.  dotnet tool install Husky
@@ -7,14 +7,15 @@
 6.  edit .husky/pre-commit
     see https://github.com/afitra/ud_dotnet_miniApi/blob/dev/.husky/pre-commit
  
-//  ORM   
-7.  Microsoft.EntityFrameworkCore
-
 //  driver sql-server
-8.  Microsoft.EntityFrameworkCore.SqlServer
+7.  dotnet add package Microsoft.EntityFrameworkCore.SqlServer --version 6.0.0
 
 //  driver postgres
-8.  Npgsql
+7.  Npgsql
+
+//  ORM   
+8.  dotnet add package Microsoft.EntityFrameworkCore
+
 
 
 

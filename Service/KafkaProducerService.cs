@@ -49,6 +49,10 @@ public class KafkaProducerService
             {
                 // Handle errors here (optional)
                 Console.WriteLine($"Error: {e.Reason}");
+
+                var messageLog =
+                    $"Failed to produce message. Error: {e.Reason}";
+                _basicLogger.Log("Error", "Kafka Singleton Producer", _source, messageLog);
             })
             .Build();
     }
